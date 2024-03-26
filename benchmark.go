@@ -32,7 +32,6 @@ func (b *Benchmark) print() {
    fmt.Printf("%s:", b.name)
 
    if b.mean != 0. && b.stdDev != 0. {
-      Zscore95 := 1.959964
       marginOfError := Zscore95 * (b.stdDev / math.Sqrt(float64(len(b.runtimes))))
       fmt.Printf(" %6.2f ± %2.3f (%d samples)", b.mean, marginOfError, len(b.runtimes))
    } else {

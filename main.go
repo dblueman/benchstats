@@ -3,9 +3,14 @@ package main
 import (
    "flag"
    "fmt"
+   "math"
    "os"
    "regexp"
    "strconv"
+)
+
+const (
+   Zscore95 = 1.959964
 )
 
 var (
@@ -40,7 +45,11 @@ func parse(fname string) (Session, error) {
 }
 
 func compare(b1 *Benchmark, b2 *Benchmark) {
-   fmt.Printf("%s: %5.1f σ%5.2f  %5.1f σ%5.2f  %4.1f%%\n", b1.name, b1.mean, b1.stdDev, b2.mean, b2.stdDev, 100 * b2.mean / b1.mean)
+   meanDiff := b1.mean - b2.mean
+   meanDiffPercent := 100 * meanDiff / b1.mean
+   marginOfError := Zscore95 * math.Sqrt(math.Pow(b1.stdDev, 2) / float64(len(b1.runtimes)) + math.Pow(b2.stdDev, 2) / float64(len(b2.runtimes)))
+
+   fmt.Printf("%s: %5d %5.1f %5.1f %4.1f%% ± %3.2f\n", b1.name, len(b1.runtimes) + len(b2.runtimes), b1.mean, b2.mean, meanDiffPercent, marginOfError)
 }
 
 func top(infiles []string) error {
@@ -61,7 +70,9 @@ func top(infiles []string) error {
       return nil
    }
 
-   fmt.Println("mean runtimes (s) - lower is better")
+   fmt.Println("            runtime (s)")
+   fmt.Println("    samples     A     B  diff  error")
+
    for name, b1 := range sessions[0].benchmarks {
       b2, ok := sessions[1].benchmarks[name]
 
@@ -75,7 +86,7 @@ func top(infiles []string) error {
 
 func main() {
    flag.Usage = func() {
-      fmt.Fprintf(os.Stderr, "Usage: benchstats <NASA NPB baseline> [NASA NPB new]\n")
+      fmt.Fprintf(os.Stderr, "Usage: benchstats <NASA NPB output A> [NASA NPB output B]\n")
       flag.PrintDefaults()
    }
    flag.Parse()
