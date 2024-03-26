@@ -44,14 +44,6 @@ func parse(fname string) (Session, error) {
    return session, nil
 }
 
-func compare(b1 *Benchmark, b2 *Benchmark) {
-   meanDiff := b1.mean - b2.mean
-   meanDiffPercent := 100 * meanDiff / b1.mean
-   marginOfError := Zscore95 * math.Sqrt(math.Pow(b1.stdDev, 2) / float64(len(b1.runtimes)) + math.Pow(b2.stdDev, 2) / float64(len(b2.runtimes)))
-
-   fmt.Printf("%s: %5d %5.1f %5.1f %4.1f%% ± %3.2f\n", b1.name, len(b1.runtimes) + len(b2.runtimes), b1.mean, b2.mean, meanDiffPercent, marginOfError)
-}
-
 func top(infiles []string) error {
    sessions := []Session{}
 
@@ -73,13 +65,26 @@ func top(infiles []string) error {
    fmt.Println("            runtime (s)")
    fmt.Println("    samples     A     B  diff  error")
 
+   totalCount := 0
+   totalDiff := 0.
+
    for name, b1 := range sessions[0].benchmarks {
       b2, ok := sessions[1].benchmarks[name]
 
-      if ok {
-         compare(b1, b2)
+      if !ok {
+         continue
       }
+
+      meanDiff := b1.mean - b2.mean
+      meanDiffPercent := 100 * meanDiff / b1.mean
+      marginOfError := Zscore95 * math.Sqrt(math.Pow(b1.stdDev, 2) / float64(len(b1.runtimes)) + math.Pow(b2.stdDev, 2) / float64(len(b2.runtimes)))
+
+      fmt.Printf("%s: %5d %5.1f %5.1f %4.1f%% ± %3.2f\n", b1.name, len(b1.runtimes) + len(b2.runtimes), b1.mean, b2.mean, meanDiffPercent, marginOfError)
+      totalCount++
+      totalDiff += meanDiff
    }
+
+   fmt.Printf(" avg:                   %4.1f%%\n", totalDiff / float64(totalCount))
 
    return nil
 }
