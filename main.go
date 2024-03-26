@@ -40,7 +40,7 @@ func parse(fname string) (Session, error) {
 }
 
 func compare(b1 *Benchmark, b2 *Benchmark) {
-   fmt.Printf("%s: %5.1f σ%5.2f  %5.1f σ%4.2f  %4.1f%%\n", b1.name, b1.mean, b1.stdDev, b2.mean, b2.stdDev, 100 * b2.mean / b1.mean)
+   fmt.Printf("%s: %5.1f σ%5.2f  %5.1f σ%5.2f  %4.1f%%\n", b1.name, b1.mean, b1.stdDev, b2.mean, b2.stdDev, 100 * b2.mean / b1.mean)
 }
 
 func top(infiles []string) error {

@@ -2,6 +2,7 @@ package main
 
 import (
    "fmt"
+   "math"
    "os"
 
    "github.com/montanaflynn/stats"
@@ -31,7 +32,9 @@ func (b *Benchmark) print() {
    fmt.Printf("%s:", b.name)
 
    if b.mean != 0. && b.stdDev != 0. {
-      fmt.Printf(" %4.2f SD %2.3f (%d samples)", b.mean, b.stdDev, len(b.runtimes))
+      Zscore95 := 1.959964
+      marginOfError := Zscore95 * (b.stdDev / math.Sqrt(float64(len(b.runtimes))))
+      fmt.Printf(" %6.2f ± %2.3f (%d samples)", b.mean, marginOfError, len(b.runtimes))
    } else {
       for _, runtime := range b.runtimes {
          fmt.Printf(" %.2f", runtime)
