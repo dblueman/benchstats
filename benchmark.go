@@ -31,7 +31,7 @@ func (b *Benchmark) print() {
    fmt.Printf("%s:", b.name)
 
    if b.mean != 0. && b.stdDev != 0. {
-      fmt.Printf(" %4.2f SD %2.3f over %d samples", b.mean, b.stdDev, len(b.runtimes))
+      fmt.Printf(" %4.2f SD %2.3f (%d samples)", b.mean, b.stdDev, len(b.runtimes))
    } else {
       for _, runtime := range b.runtimes {
          fmt.Printf(" %.2f", runtime)
