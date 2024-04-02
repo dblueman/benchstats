@@ -6,8 +6,17 @@ import (
    "math"
    "os"
    "regexp"
+   "sort"
    "strconv"
 )
+
+type Result struct {
+   name    string
+   samples int
+   A, B    float64
+   diff    float64
+   err     float64
+}
 
 const (
    Zscore95 = 1.959964
@@ -30,7 +39,7 @@ func parse(fname string) (Session, error) {
       name := string(match[1]) + "-" + string(match[2])
       runtime, err := strconv.ParseFloat(string(match[3]), 64)
       if err != nil {
-         return Session{}, fmt.Errorf("parse: %w")
+         return Session{}, fmt.Errorf("parse: invalid number '%v'", match[3])
       }
 
       _, ok := session.benchmarks[name]
@@ -65,8 +74,8 @@ func top(infiles []string) error {
    fmt.Println("            runtime (s)")
    fmt.Println("    samples     A     B  diff  error")
 
-   totalCount := 0
    totalDiff := 0.
+   results := []Result{}
 
    for name, b1 := range sessions[0].benchmarks {
       b2, ok := sessions[1].benchmarks[name]
@@ -76,15 +85,29 @@ func top(infiles []string) error {
       }
 
       meanDiff := b1.mean - b2.mean
-      meanDiffPercent := 100 * meanDiff / b1.mean
       marginOfError := Zscore95 * math.Sqrt(math.Pow(b1.stdDev, 2) / float64(len(b1.runtimes)) + math.Pow(b2.stdDev, 2) / float64(len(b2.runtimes)))
+      result := Result{
+         name: b1.name,
+         samples: len(b1.runtimes) + len(b2.runtimes),
+         A:       b1.mean,
+         B:       b2.mean,
+         diff:    100 * meanDiff / b1.mean,
+         err:     marginOfError,
+      }
 
-      fmt.Printf("%s: %5d %5.1f %5.1f %4.1f%% ± %3.2f\n", b1.name, len(b1.runtimes) + len(b2.runtimes), b1.mean, b2.mean, meanDiffPercent, marginOfError)
-      totalCount++
       totalDiff += meanDiff
+      results = append(results, result)
    }
 
-   fmt.Printf(" avg:                   %4.1f%%\n", totalDiff / float64(totalCount))
+   sort.Slice(results, func(i, j int) bool {
+      return results[i].diff < results[j].diff
+   })
+
+   for _, result := range results {
+      fmt.Printf("%s: %5d %5.1f %5.1f %4.1f%% ± %3.2f\n", result.name, result.samples, result.A, result.B, result.diff, result.err)
+   }
+
+   fmt.Printf(" avg:                   %4.1f%%\n", totalDiff / float64(len(results)))
 
    return nil
 }
@@ -103,7 +126,7 @@ func main() {
 
    err := top(flag.Args())
    if err != nil {
-      fmt.Fprintf(os.Stderr, err.Error())
+      fmt.Fprint(os.Stderr, err.Error())
       os.Exit(1)
    }
 }

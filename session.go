@@ -1,7 +1,6 @@
 package main
 
 type Session struct {
-   environment string
    benchmarks  map[string]*Benchmark
 }
 
