@@ -72,7 +72,7 @@ func top(infiles []string) error {
    }
 
    fmt.Println("            runtime (s)")
-   fmt.Println("    samples     A     B  diff  error")
+   fmt.Println("  samples      A      B    diff    error")
 
    totalDiff := 0.
    results := []Result{}
@@ -104,10 +104,10 @@ func top(infiles []string) error {
    })
 
    for _, result := range results {
-      fmt.Printf("%s: %5d %5.1f %5.1f %4.1f%% ± %3.2f\n", result.name, result.samples, result.A, result.B, result.diff, result.err)
+      fmt.Printf("%s: %3d %6.1f %6.1f %6.1f%% ± %6.2f\n", result.name, result.samples, result.A, result.B, result.diff, result.err)
    }
 
-   fmt.Printf(" avg:                   %4.1f%%\n", totalDiff / float64(len(results)))
+   fmt.Printf(" avg:                   %6.1f%%\n", totalDiff / float64(len(results)))
 
    return nil
 }
