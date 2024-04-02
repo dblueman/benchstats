@@ -1,7 +1,8 @@
 package main
 
 type Session struct {
-   benchmarks  map[string]*Benchmark
+   name       string
+   benchmarks map[string]*Benchmark
 }
 
 func (s *Session) stats() {

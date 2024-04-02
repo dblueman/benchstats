@@ -12,7 +12,6 @@ import (
 
 type Result struct {
    name    string
-   samples int
    A, B    float64
    diff    float64
    err     float64
@@ -32,7 +31,10 @@ func parse(fname string) (Session, error) {
       return Session{}, fmt.Errorf("parse: %w", err)
    }
 
-   session := Session{benchmarks: map[string]*Benchmark{}}
+   session := Session{
+      name:       fname,
+      benchmarks: map[string]*Benchmark{},
+   }
    matches := regexpNPB.FindAllSubmatch(text, -1)
 
    for _, match := range matches {
@@ -71,8 +73,19 @@ func top(infiles []string) error {
       return nil
    }
 
-   fmt.Println("            runtime (s)")
-   fmt.Println("  samples      A      B    diff    error")
+   fmt.Println("  runs description")
+   for i, session := range sessions {
+      runs := 0
+
+      for _, benchmark := range session.benchmarks {
+         runs += len(benchmark.runtimes)
+      }
+
+      fmt.Printf("%c %4d %s\n", 'A'+i, runs, session.name)
+   }
+
+   fmt.Println("\n        runtime (s)")
+   fmt.Println("           A      B    diff    error")
 
    totalDiff := 0.
    results := []Result{}
@@ -88,7 +101,6 @@ func top(infiles []string) error {
       marginOfError := Zscore95 * math.Sqrt(math.Pow(b1.stdDev, 2) / float64(len(b1.runtimes)) + math.Pow(b2.stdDev, 2) / float64(len(b2.runtimes)))
       result := Result{
          name: b1.name,
-         samples: len(b1.runtimes) + len(b2.runtimes),
          A:       b1.mean,
          B:       b2.mean,
          diff:    100 * meanDiff / b1.mean,
@@ -104,10 +116,10 @@ func top(infiles []string) error {
    })
 
    for _, result := range results {
-      fmt.Printf("%s: %3d %6.1f %6.1f %6.1f%% ± %6.2f\n", result.name, result.samples, result.A, result.B, result.diff, result.err)
+      fmt.Printf("%s: %6.1f %6.1f %6.1f%% ± %6.2f\n", result.name, result.A, result.B, result.diff, result.err)
    }
 
-   fmt.Printf(" avg:                   %6.1f%%\n", totalDiff / float64(len(results)))
+   fmt.Printf(" avg:               %6.1f%%\n", totalDiff / float64(len(results)))
 
    return nil
 }
